@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Match Game</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      background: linear-gradient(135deg, #b9edea);
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .stats {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #444;
+    }
+
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      grid-gap: 15px;
+      justify-content: center;
+    }
+
+    .card {
+      width: 100px;
+      height: 100px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      transition: transform 0.3s, background-color 0.3s;
+    }
+
+    .card.flip {
+      background-color: #f7d6e0;
+      transform: rotateY(180deg);
+    }
+
+    .card.matched {
+      background-color: #a2d2ff;
+      cursor: default;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      background: #0077b6;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #023e8a;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧠 Memory Match Game</h1>
+  <div class="stats">
+    ⏱ Time: <span id="timer">0</span>s |
+    🌀 Moves: <span id="moves">0</span> |
+    💥 Matches: <span id="matches">0</span>/8 |
+    ⭐ Score: <span id="score">0</span>
+  </div>
+
+  <div class="game-board"></div>
+  <button onclick="restartGame()">🔄 Restart</button>
+
+  <script>
+    const board = document.querySelector('.game-board');
+    const movesDisplay = document.getElementById('moves');
+    const matchesDisplay = document.getElementById('matches');
+    const timerDisplay = document.getElementById('timer');
+    const scoreDisplay = document.getElementById('score');
+
+    let emojis = ['🐶','🐱','🐭','🐰','🦊','🐻','🐸','🐵'];
+    let cards, flippedCards, lockBoard, moves, matches, timer, seconds, score;
+
+    function initGame() {
+      board.innerHTML = '';
+      moves = 0;
+      matches = 0;
+      seconds = 0;
+      score = 0;
+      flippedCards = [];
+      lockBoard = false;
+
+      movesDisplay.textContent = moves;
+      matchesDisplay.textContent = matches;
+      timerDisplay.textContent = seconds;
+      scoreDisplay.textContent = score;
+
+      clearInterval(timer);
+      timer = setInterval(() => {
+        seconds++;
+        timerDisplay.textContent = seconds;
+      }, 1000);
+
+      cards = [...emojis, ...emojis];
+      cards.sort(() => 0.5 - Math.random());
+
+      cards.forEach(emoji => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.emoji = emoji;
+        card.innerHTML = '?';
+        board.appendChild(card);
+        card.addEventListener('click', () => flipCard(card));
+      });
+    }
+
+    function flipCard(card) {
+      if (lockBoard || card.classList.contains('flip') || card.classList.contains('matched')) return;
+      card.classList.add('flip');
+      card.innerHTML = card.dataset.emoji;
+      flippedCards.push(card);
+
+      if (flippedCards.length === 2) {
+        moves++;
+        movesDisplay.textContent = moves;
+        checkMatch();
+      }
+    }
+
+    function checkMatch() {
+      const [first, second] = flippedCards;
+      if (first.dataset.emoji === second.dataset.emoji) {
+        first.classList.add('matched');
+        second.classList.add('matched');
+        matches++;
+        matchesDisplay.textContent = matches;
+        score += 100;
+        scoreDisplay.textContent = score;
+
+        if (matches === emojis.length) {
+          clearInterval(timer);
+          score += Math.max(0, 500 - seconds * 5);
+          scoreDisplay.textContent = score;
+          setTimeout(() => {
+            alert(`🎉 You Won!\nMoves: ${moves}\nTime: ${seconds}s\nScore: ${score}`);
+          }, 300);
+        }
+      } else {
+        lockBoard = true;
+        setTimeout(() => {
+          first.classList.remove('flip');
+          second.classList.remove('flip');
+          first.innerHTML = '?';
+          second.innerHTML = '?';
+          lockBoard = false;
+        }, 800);
+      }
+      flippedCards = [];
+    }
+
+    function restartGame() {
+      clearInterval(timer);
+      initGame();
+    }
+
+    initGame();
+  </script>
+
+</body>
+</html>
